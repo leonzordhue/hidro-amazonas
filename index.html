@@ -213,7 +213,7 @@
     </div>
     <div class="header-right">
       <div class="header-badge">Hidroviário</div>
-      <a class="header-back" href="https://leonzordhue.github.io/dmob-am/" target="_blank">← Painel</a>
+      <a class="header-back" href="https://leonzordhue.github.io/painel-dmob/" target="_blank">← Painel</a>
     </div>
   </header>
 
@@ -349,8 +349,8 @@
 
   // ══ MAPA PRINCIPAL ══
   const mapa = L.map('mapa', { center: [-4.0, -63.0], zoom: 5 });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© CartoDB', maxZoom: 18
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19
   }).addTo(mapa);
 
   const makeIcon = () => L.divIcon({
@@ -452,7 +452,7 @@
       const mm = document.getElementById('modalMinimap');
       mm.innerHTML = '';
       minimapInstance = L.map(mm, { center: [t.lat, t.lon], zoom: 12, zoomControl: false, attributionControl: false });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(minimapInstance);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(minimapInstance);
       L.marker([t.lat, t.lon], { icon: makeIcon() }).addTo(minimapInstance);
     }, 100);
   }
