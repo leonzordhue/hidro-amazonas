@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SEINFRA/AM — Terminais Flutuantes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --azul:       #002D72;
+      --azul-claro: #EBF0FA;
+      --azul-borda: #C4D0E8;
+      --amarelo:    #F5A623;
+      --amarelo-cl: #FEF3DC;
+      --hidro:      #0077b6;
+      --hidro-dk:   #023e8a;
+      --hidro-cl:   #e0f2fe;
+      --hidro-brd:  #90e0ef;
+      --verde:      #007B3E;
+      --verde-cl:   #E6F4ED;
+      --cinza-txt:  #1A2540;
+      --cinza-med:  #4A5568;
+      --cinza-aux:  #8896A8;
+      --cinza-bg:   #F5F7FB;
+      --borda:      #E0E6F0;
+      --branco:     #FFFFFF;
+      --font:       'Outfit', sans-serif;
+      --shadow:     0 2px 16px rgba(0,45,114,0.09), 0 0 0 1px var(--borda);
+      --shadow-h:   0 12px 40px rgba(0,119,182,0.18), 0 0 0 1px var(--hidro-brd);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--cinza-bg); color: var(--cinza-txt); -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ══ TOPBAR ══ */
+    .topbar { background: var(--azul); padding: 0.5rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-left { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 500; }
+    .topbar-right { font-size: 0.66rem; font-weight: 700; color: var(--amarelo); letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; gap: 0.45rem; }
+    .topbar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amarelo); box-shadow: 0 0 6px var(--amarelo); animation: pulse 2s ease-in-out infinite; }
+
+    /* ══ HEADER ══ */
+    .site-header { background: var(--branco); border-bottom: 2px solid var(--azul); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 500; box-shadow: 0 2px 20px rgba(0,45,114,0.08); }
+    .header-brand { display: flex; align-items: center; gap: 0.85rem; }
+    .brand-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--hidro), var(--hidro-dk)); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+    .brand-sup { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-aux); margin-bottom: 0.1rem; }
+    .brand-name { font-size: 1.05rem; font-weight: 800; color: var(--azul); letter-spacing: -0.01em; }
+    .brand-name span { color: var(--hidro); }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .header-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hidro); background: var(--hidro-cl); border: 1.5px solid var(--hidro-brd); padding: 0.35em 0.9em; border-radius: 100px; }
+    .header-back { font-size: 0.72rem; font-weight: 600; color: var(--cinza-aux); display: flex; align-items: center; gap: 0.4rem; padding: 0.35em 0.85em; border-radius: 100px; border: 1.5px solid var(--borda); transition: all 0.2s; }
+    .header-back:hover { border-color: var(--azul); color: var(--azul); }
+
+    /* ══ HERO ══ */
+    .hero-strip {
+      background: linear-gradient(135deg, #012a4a 0%, #013a63 40%, #01497c 100%);
+      padding: 3.5rem 2rem 4.5rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-strip::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(ellipse at 80% 20%, rgba(0,180,216,0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 5% 90%, rgba(245,166,35,0.08) 0%, transparent 40%),
+        repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(0,180,216,0.03) 30px, rgba(0,180,216,0.03) 31px);
+      pointer-events: none;
+    }
+    /* Ondas decorativas */
+    .hero-waves {
+      position: absolute; bottom: 0; left: 0; width: 100%; opacity: 0.15;
+    }
+    .hero-strip-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
+    .hero-chip { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #90e0ef; background: rgba(0,180,216,0.12); border: 1px solid rgba(0,180,216,0.3); padding: 0.4em 1em; border-radius: 100px; margin-bottom: 1.2rem; }
+    .hero-chip-dot { width: 5px; height: 5px; border-radius: 50%; background: #90e0ef; animation: pulse 2s ease-in-out infinite; }
+    .hero-title { font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 900; color: var(--branco); letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 0.75rem; }
+    .hero-title em { font-style: normal; color: #90e0ef; }
+    .hero-sub { font-size: 0.95rem; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 480px; }
+    .hero-stats { display: flex; gap: 2.5rem; flex-wrap: wrap; }
+    .hero-stat-val { font-size: 2.5rem; font-weight: 900; color: var(--branco); letter-spacing: -0.03em; line-height: 1; }
+    .hero-stat-val .acc { color: var(--amarelo); }
+    .hero-stat-val .acc2 { color: #90e0ef; }
+    .hero-stat-lbl { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-top: 0.3rem; }
+    .hero-wave { position: absolute; bottom: -1px; left: 0; width: 100%; z-index: 2; }
+    .hero-wave svg { display: block; width: 100%; }
+
+    /* ══ LAYOUT ══ */
+    .main-wrap { max-width: 1200px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+    /* ══ MAPA ══ */
+    .map-section { background: var(--branco); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.75rem; }
+    .map-header { padding: 1.25rem 1.5rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .map-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-med); display: flex; align-items: center; gap: 0.5rem; }
+    #mapa { height: 480px; }
+
+    /* ══ BUSCA ══ */
+    .filters-bar { background: var(--branco); border-radius: 14px; box-shadow: var(--shadow); padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .filter-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-aux); white-space: nowrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+    .search-wrap input { font-family: var(--font); font-size: 0.82rem; width: 100%; padding: 0.5rem 0.85rem 0.5rem 2.1rem; border: 1.5px solid var(--borda); border-radius: 8px; outline: none; color: var(--cinza-txt); background: var(--cinza-bg); transition: all 0.2s; }
+    .search-wrap input:focus { border-color: var(--hidro); background: var(--branco); box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+    .search-icon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--cinza-aux); pointer-events: none; }
+    .filter-count { margin-left: auto; font-size: 0.72rem; font-weight: 600; color: var(--cinza-aux); }
+    .filter-count span { color: var(--hidro); font-weight: 800; }
+
+    /* ══ LISTA TERMINAIS ══ */
+    .term-list { display: flex; flex-direction: column; gap: 0.85rem; }
+
+    .term-card {
+      background: var(--branco);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 1.25rem 1.5rem;
+      display: flex; align-items: center; gap: 1.25rem;
+      transition: box-shadow 0.22s, transform 0.22s;
+      cursor: pointer;
+      position: relative; overflow: hidden;
+    }
+    .term-card::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: linear-gradient(to bottom, var(--hidro), var(--hidro-dk));
+      border-radius: 4px 0 0 4px;
+    }
+    .term-card:hover { box-shadow: var(--shadow-h); transform: translateX(4px); }
+    .term-card.hidden { display: none; }
+
+    .term-num {
+      font-size: 1.1rem; font-weight: 900; color: var(--hidro);
+      font-variant-numeric: tabular-nums;
+      min-width: 2rem; text-align: center; opacity: 0.4;
+    }
+
+    .term-icon {
+      width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--hidro-cl), #caf0f8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .term-body { flex: 1; min-width: 0; }
+    .term-destino { font-size: 0.95rem; font-weight: 700; color: var(--azul); margin-bottom: 0.3rem; }
+    .term-mun { font-size: 0.78rem; color: var(--cinza-aux); font-weight: 500; display: flex; align-items: center; gap: 0.3rem; }
+
+    .term-coords { font-size: 0.68rem; font-weight: 600; color: var(--cinza-aux); font-family: monospace; text-align: right; flex-shrink: 0; line-height: 1.6; }
+
+    .term-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.2em 0.65em; border-radius: 100px; background: var(--hidro-cl); color: var(--hidro); border: 1px solid var(--hidro-brd); margin-top: 0.35rem; }
+
+    /* ══ SEM RESULTADOS ══ */
+    .no-results { display: none; text-align: center; padding: 4rem 2rem; color: var(--cinza-aux); }
+    .no-results.show { display: block; }
+
+    /* ══ MODAL ══ */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: var(--branco); border-radius: 20px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 80px rgba(0,45,114,0.22); transform: translateY(20px); transition: transform 0.25s; }
+    .modal-overlay.open .modal { transform: none; }
+    .modal-header { background: linear-gradient(135deg, #012a4a, #01497c); padding: 2rem; position: relative; }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.12); border: none; color: white; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .modal-close:hover { background: rgba(255,255,255,0.22); }
+    .modal-icon { font-size: 2.2rem; margin-bottom: 0.6rem; }
+    .modal-title { font-size: 1.35rem; font-weight: 900; color: var(--branco); letter-spacing: -0.02em; margin-bottom: 0.3rem; }
+    .modal-mun { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+    .modal-body { padding: 1.75rem; }
+    .modal-section { margin-bottom: 1.25rem; }
+    .modal-section-title { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--cinza-aux); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--borda); }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .modal-field-lbl { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-aux); margin-bottom: 0.15rem; }
+    .modal-field-val { font-size: 0.88rem; font-weight: 600; color: var(--cinza-txt); }
+
+    /* Minimap no modal */
+    #modalMinimap { height: 200px; border-radius: 10px; overflow: hidden; margin-top: 1rem; border: 1px solid var(--borda); }
+
+    /* ══ FOOTER ══ */
+    .site-footer { background: var(--azul); padding: 2rem; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .footer-icon { width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .footer-name { font-size: 0.9rem; font-weight: 800; color: var(--branco); }
+    .footer-name span { color: var(--amarelo); }
+    .footer-sub { font-size: 0.65rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
+    .footer-copy { font-size: 0.68rem; color: rgba(255,255,255,0.4); }
+
+    @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+    @keyframes up { from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+    .fade-in { animation: up 0.35s ease forwards; }
+
+    @media (max-width: 680px) {
+      .term-coords { display: none; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .main-wrap { padding: 1.5rem 1rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">Governo do Estado do Amazonas</div>
+    <div class="topbar-right"><div class="topbar-dot"></div>SEINFRA · Hidroviário</div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-brand">
+      <div class="brand-icon">⚓</div>
+      <div>
+        <div class="brand-sup">Secretaria de Estado de Infraestrutura</div>
+        <div class="brand-name">Terminais<span>/AM</span></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-badge">Hidroviário</div>
+      <a class="header-back" href="https://leonzordhue.github.io/dmob-am/" target="_blank">← Painel</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-strip">
+    <div class="hero-strip-inner">
+      <div>
+        <div class="hero-chip"><span class="hero-chip-dot"></span>Sistema Hidroviário — AM</div>
+        <h1 class="hero-title">Terminais<br><em>Flutuantes</em></h1>
+        <p class="hero-sub">Mapeamento e gestão dos terminais hidroviários flutuantes do Amazonas. Localização georreferenciada dos pontos de embarque e desembarque nas comunidades e distritos do interior do Estado.</p>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-val"><span class="acc">31</span></div>
+          <div class="hero-stat-lbl">Terminais</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val"><span class="acc2">27</span></div>
+          <div class="hero-stat-lbl">Municípios</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val"><span class="acc">AM</span></div>
+          <div class="hero-stat-lbl">Estado</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-wave">
+      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,20 C240,55 480,5 720,30 C960,55 1200,10 1440,35 L1440,60 L0,60 Z" fill="#F5F7FB" opacity="0.5"/>
+        <path d="M0,35 C240,10 480,50 720,20 C960,0 1200,45 1440,20 L1440,60 L0,60 Z" fill="#F5F7FB"/>
+      </svg>
+    </div>
+  </section>
+
+  <div class="main-wrap">
+
+    <!-- MAPA -->
+    <div class="map-section">
+      <div class="map-header">
+        <div class="map-title">⚓ Localização dos Terminais Flutuantes — Estado do Amazonas</div>
+      </div>
+      <div id="mapa"></div>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="filters-bar">
+      <span class="filter-label">Terminais:</span>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar município ou destino..."/>
+      </div>
+      <div class="filter-count"><span id="countNum">31</span> terminais encontrados</div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="term-list" id="termList"></div>
+    <div class="no-results" id="noResults">Nenhum terminal encontrado.</div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <button class="modal-close" id="modalClose">✕</button>
+        <div class="modal-icon">⚓</div>
+        <div class="modal-title" id="mTitle"></div>
+        <div class="modal-mun" id="mMun"></div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <div class="modal-section-title">Informações do Terminal</div>
+          <div class="modal-grid" id="mGrid"></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Localização no Mapa</div>
+          <div id="modalMinimap"></div>
+        </div>
+        <div style="margin-top:1rem;padding:1rem;background:var(--hidro-cl);border-radius:10px;font-size:0.78rem;color:#01497c;line-height:1.6;border:1px solid var(--hidro-brd);">
+          <strong>ℹ️ Sobre os Terminais Flutuantes:</strong> Os terminais hidroviários flutuantes da SEINFRA/AM são estruturas de embarque e desembarque instaladas às margens dos rios do Amazonas, garantindo conectividade entre municípios-sede e suas comunidades e distritos no interior do Estado.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-icon">⚓</div>
+        <div>
+          <div class="footer-name">SEINFRA<span>/AM</span></div>
+          <div class="footer-sub">Secretaria de Estado de Infraestrutura — Amazonas</div>
+        </div>
+      </div>
+      <div class="footer-copy">Hidroviário · Manaus, AM · 2026</div>
+    </div>
+  </footer>
+
+  <script>
+  const TERMINAIS = [
+    {"localidade":"JAPURÁ","destino":"Comunidade Acanauí","lat":-1.8214,"lon":-66.60935},
+    {"localidade":"ALVARÃES","destino":"Distrito de Nogueira","lat":-3.30389,"lon":-64.77853},
+    {"localidade":"AMATURÁ","destino":"Comunidade Nova Italia","lat":-3.40794,"lon":-68.22404},
+    {"localidade":"ANAMÃ","destino":"Distrito do Arixi","lat":-3.47613,"lon":-61.50977},
+    {"localidade":"ANORI","destino":"Comunidade Vila do Cuianã","lat":-3.77333,"lon":-61.64444},
+    {"localidade":"ATALAIA DO NORTE","destino":"Porto de Atalaia do Norte","lat":-4.36293,"lon":-70.1924},
+    {"localidade":"AUTAZES","destino":"Comunidade Vila do Novo Céu","lat":-3.38436,"lon":-59.27321},
+    {"localidade":"BARCELOS","destino":"Distrito de Moura","lat":-1.45722,"lon":-61.62972},
+    {"localidade":"BARREIRINHA","destino":"Distrito Cametá de Ramos","lat":-2.83611,"lon":-57.41722},
+    {"localidade":"BENJAMIN CONSTANT","destino":"Comunidade Feijoal","lat":-4.29514,"lon":-69.53769},
+    {"localidade":"BENJAMIN CONSTANT","destino":"Comunidade Filadélfia","lat":-4.37867,"lon":-59.63389},
+    {"localidade":"BERURI","destino":"Comunidade Santa Maria do Pupunhal","lat":-3.726,"lon":-61.24186},
+    {"localidade":"BOA VISTA DO RAMOS","destino":"Comunidade Menino de Deus","lat":-3.15968,"lon":-57.54784},
+    {"localidade":"BOA VISTA DO RAMOS","destino":"Comunidade de Jesus do Lago Preto do Ramos","lat":-3.26628,"lon":-57.99386},
+    {"localidade":"BORBA","destino":"Distrito do Axinim","lat":-4.05022,"lon":-59.37214},
+    {"localidade":"CAREIRO","destino":"Comunidade Purupuru","lat":-3.38278,"lon":-59.72278},
+    {"localidade":"HUMAITÁ","destino":"Comunidade de Auxiliadora","lat":-6.24962,"lon":-61.83792},
+    {"localidade":"JURUÁ","destino":"Porto de Juruá","lat":-3.47058,"lon":-66.06476},
+    {"localidade":"JUTAÍ","destino":"Vila Copatana","lat":-2.85194,"lon":-66.93},
+    {"localidade":"MANICORÉ","destino":"Comunidade Cachoeirinha","lat":-5.49083,"lon":-60.825},
+    {"localidade":"MANICORÉ","destino":"Comunidade Democracia","lat":-6.48333,"lon":-61.4},
+    {"localidade":"MAUÉS","destino":"Comunidade Bom Jesus do Canela","lat":-3.60494,"lon":-57.98478},
+    {"localidade":"NHAMUNDÁ","destino":"Rua Tiradentes","lat":-2.19238,"lon":-56.70922},
+    {"localidade":"PARINTINS","destino":"Comunidade do Bom Socorro do Zé Açú","lat":-2.67402,"lon":-56.62769},
+    {"localidade":"PARINTINS","destino":"Distrito do Mocambo","lat":-2.45918,"lon":-57.28159},
+    {"localidade":"SANTO ANTÔNIO DO IÇÁ","destino":"Vila da Betânia","lat":-3.07245,"lon":-68.07091},
+    {"localidade":"SÃO PAULO DE OLIVENÇA","destino":"Comunidade Campo Alegre","lat":-3.58621,"lon":-69.38079},
+    {"localidade":"SÃO SEBASTIÃO DO UATUMÃ","destino":"Distrito de Santana","lat":-2.57758,"lon":-57.98683},
+    {"localidade":"TAPAUÁ","destino":"Comunidade Foz do Tapauá","lat":-5.76247,"lon":-64.39258},
+    {"localidade":"TEFÉ","destino":"Comunidade Caimbé","lat":-3.52972,"lon":-64.40981},
+    {"localidade":"URUCURITUBA","destino":"Comunidade do Tabocal","lat":-3.122,"lon":-58.15847}
+  ];
+
+  // ══ MAPA PRINCIPAL ══
+  const mapa = L.map('mapa', { center: [-4.0, -63.0], zoom: 5 });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© CartoDB', maxZoom: 18
+  }).addTo(mapa);
+
+  const makeIcon = () => L.divIcon({
+    className: '',
+    html: `<div style="
+      width:30px;height:30px;border-radius:50%;
+      background:linear-gradient(135deg,#0077b6,#023e8a);
+      border:3px solid white;
+      box-shadow:0 3px 10px rgba(0,119,182,0.5);
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;color:white;
+    ">⚓</div>`,
+    iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -17]
+  });
+
+  TERMINAIS.forEach((t, i) => {
+    const m = L.marker([t.lat, t.lon], { icon: makeIcon() }).addTo(mapa);
+    m.bindPopup(`
+      <div style="font-family:'Outfit',sans-serif;min-width:190px;">
+        <div style="font-weight:800;font-size:0.88rem;color:#002D72;margin-bottom:0.25rem;">${t.destino}</div>
+        <div style="font-size:0.73rem;color:#666;margin-bottom:0.5rem;">📍 ${capitalize(t.localidade)}</div>
+        <div style="font-size:0.7rem;font-family:monospace;color:#8896A8;">${t.lat.toFixed(4)}°S · ${Math.abs(t.lon).toFixed(4)}°W</div>
+      </div>
+    `);
+    m.on('click', () => abrirModal(i));
+  });
+
+  function capitalize(s) {
+    return s.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+  }
+
+  // ══ RENDER LISTA ══
+  function renderLista(lista) {
+    const el = document.getElementById('termList');
+    const noRes = document.getElementById('noResults');
+    const count = document.getElementById('countNum');
+
+    if (!lista.length) {
+      el.innerHTML = '';
+      noRes.classList.add('show');
+      count.textContent = '0';
+      return;
+    }
+
+    noRes.classList.remove('show');
+    count.textContent = lista.length;
+
+    el.innerHTML = lista.map((t, idx) => {
+      const i = TERMINAIS.indexOf(t);
+      return `
+        <div class="term-card fade-in" onclick="abrirModal(${i})" style="animation-delay:${idx*0.02}s">
+          <div class="term-num">${String(idx+1).padStart(2,'0')}</div>
+          <div class="term-icon">⚓</div>
+          <div class="term-body">
+            <div class="term-destino">${t.destino}</div>
+            <div class="term-mun">📍 ${capitalize(t.localidade)}</div>
+            <div><span class="term-badge">Terminal Flutuante</span></div>
+          </div>
+          <div class="term-coords">
+            ${t.lat.toFixed(4)}°S<br>
+            ${Math.abs(t.lon).toFixed(4)}°W
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderLista(TERMINAIS);
+
+  // ══ BUSCA ══
+  document.getElementById('searchInput').addEventListener('input', e => {
+    const t = e.target.value.toLowerCase().trim();
+    if (!t) { renderLista(TERMINAIS); return; }
+    renderLista(TERMINAIS.filter(x =>
+      x.localidade.toLowerCase().includes(t) ||
+      x.destino.toLowerCase().includes(t)
+    ));
+  });
+
+  // ══ MODAL ══
+  let minimapInstance = null;
+
+  function abrirModal(i) {
+    const t = TERMINAIS[i];
+    document.getElementById('mTitle').textContent = t.destino;
+    document.getElementById('mMun').textContent = '📍 ' + capitalize(t.localidade);
+    document.getElementById('mGrid').innerHTML = `
+      <div><div class="modal-field-lbl">Município</div><div class="modal-field-val">${capitalize(t.localidade)}</div></div>
+      <div><div class="modal-field-lbl">Destino</div><div class="modal-field-val">${t.destino}</div></div>
+      <div><div class="modal-field-lbl">Latitude</div><div class="modal-field-val" style="font-family:monospace">${t.lat.toFixed(5)}°</div></div>
+      <div><div class="modal-field-lbl">Longitude</div><div class="modal-field-val" style="font-family:monospace">${t.lon.toFixed(5)}°</div></div>
+    `;
+
+    document.getElementById('modalOverlay').classList.add('open');
+
+    // Minimap
+    setTimeout(() => {
+      if (minimapInstance) { minimapInstance.remove(); minimapInstance = null; }
+      const mm = document.getElementById('modalMinimap');
+      mm.innerHTML = '';
+      minimapInstance = L.map(mm, { center: [t.lat, t.lon], zoom: 12, zoomControl: false, attributionControl: false });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(minimapInstance);
+      L.marker([t.lat, t.lon], { icon: makeIcon() }).addTo(minimapInstance);
+    }, 100);
+  }
+
+  document.getElementById('modalClose').addEventListener('click', () => {
+    document.getElementById('modalOverlay').classList.remove('open');
+  });
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay'))
+      document.getElementById('modalOverlay').classList.remove('open');
+  });
+  </script>
+</body>
+</html>
