@@ -1,469 +1,984 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SEINFRA/AM — Terminais Flutuantes</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta de Ramais — SEINFRA/AM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
-      --azul:       #002D72;
-      --azul-claro: #EBF0FA;
-      --azul-borda: #C4D0E8;
-      --amarelo:    #F5A623;
-      --amarelo-cl: #FEF3DC;
-      --hidro:      #0077b6;
-      --hidro-dk:   #023e8a;
-      --hidro-cl:   #e0f2fe;
-      --hidro-brd:  #90e0ef;
-      --verde:      #007B3E;
-      --verde-cl:   #E6F4ED;
-      --cinza-txt:  #1A2540;
-      --cinza-med:  #4A5568;
-      --cinza-aux:  #8896A8;
-      --cinza-bg:   #F5F7FB;
-      --borda:      #E0E6F0;
-      --branco:     #FFFFFF;
-      --font:       'Outfit', sans-serif;
-      --shadow:     0 2px 16px rgba(0,45,114,0.09), 0 0 0 1px var(--borda);
-      --shadow-h:   0 12px 40px rgba(0,119,182,0.18), 0 0 0 1px var(--hidro-brd);
+      --azul:        #002D72;
+      --azul-hover:  #00348A;
+      --azul-claro:  #EBF0FA;
+      --azul-borda:  #C4D0E8;
+      --amarelo:     #F5A623;
+      --amarelo-cl:  #FEF3DC;
+      --amarelo-brd: #F5C878;
+      --verde:       #007B3E;
+      --cinza-txt:   #1A2540;
+      --cinza-med:   #4A5568;
+      --cinza-aux:   #8896A8;
+      --cinza-bg:    #F5F7FB;
+      --borda:       #E0E6F0;
+      --branco:      #FFFFFF;
+      --font:        'Outfit', sans-serif;
+      --shadow:      0 2px 16px rgba(0,45,114,0.09), 0 0 0 1px var(--borda);
     }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { font-family: var(--font); background: var(--cinza-bg); color: var(--cinza-txt); -webkit-font-smoothing: antialiased; }
-    a { text-decoration: none; color: inherit; }
+    body {
+      font-family: var(--font);
+      background: var(--cinza-bg);
+      color: var(--cinza-txt);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    ::selection { background: rgba(0,45,114,0.14); }
 
-    /* ══ TOPBAR ══ */
-    .topbar { background: var(--azul); padding: 0.5rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-    .topbar-left { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 500; }
-    .topbar-right { font-size: 0.66rem; font-weight: 700; color: var(--amarelo); letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; gap: 0.45rem; }
-    .topbar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amarelo); box-shadow: 0 0 6px var(--amarelo); animation: pulse 2s ease-in-out infinite; }
+    /* TOPBAR */
+    .topbar {
+      background: var(--azul);
+      padding: 0.5rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-left {
+      font-size: 0.68rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 500;
+    }
+    .topbar-right {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--amarelo);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .topbar-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--amarelo); box-shadow: 0 0 8px var(--amarelo);
+      animation: pulse 2s ease-in-out infinite;
+    }
 
-    /* ══ HEADER ══ */
-    .site-header { background: var(--branco); border-bottom: 2px solid var(--azul); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 500; box-shadow: 0 2px 20px rgba(0,45,114,0.08); }
-    .header-brand { display: flex; align-items: center; gap: 0.85rem; }
-    .brand-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--hidro), var(--hidro-dk)); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
-    .brand-sup { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-aux); margin-bottom: 0.1rem; }
-    .brand-name { font-size: 1.05rem; font-weight: 800; color: var(--azul); letter-spacing: -0.01em; }
-    .brand-name span { color: var(--hidro); }
-    .header-right { display: flex; align-items: center; gap: 0.75rem; }
-    .header-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hidro); background: var(--hidro-cl); border: 1.5px solid var(--hidro-brd); padding: 0.35em 0.9em; border-radius: 100px; }
-    .header-back { font-size: 0.72rem; font-weight: 600; color: var(--cinza-aux); display: flex; align-items: center; gap: 0.4rem; padding: 0.35em 0.85em; border-radius: 100px; border: 1.5px solid var(--borda); transition: all 0.2s; }
-    .header-back:hover { border-color: var(--azul); color: var(--azul); }
+    /* HEADER */
+    .site-header {
+      background: var(--branco);
+      border-bottom: 2px solid var(--azul);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,45,114,0.08);
+    }
+    .header-brand { display: flex; align-items: center; gap: 0.9rem; }
+    .brand-escudo {
+      width: 44px; height: 44px; border-radius: 8px;
+      background: var(--azul);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .brand-sup {
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--cinza-aux);
+    }
+    .brand-name {
+      font-size: 1.05rem; font-weight: 800; color: var(--azul);
+    }
+    .brand-name span { color: var(--amarelo); }
+    .header-badge {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--azul);
+      background: var(--azul-claro); border: 1.5px solid var(--azul-borda);
+      padding: 0.4em 1em; border-radius: 100px;
+    }
+    @media (max-width: 600px) { .header-badge { display: none; } }
 
-    /* ══ HERO ══ */
-    .hero-strip {
-      background: linear-gradient(135deg, #012a4a 0%, #013a63 40%, #01497c 100%);
-      padding: 3.5rem 2rem 4.5rem;
+    /* MINI HERO */
+    .page-hero {
+      background: var(--azul);
+      padding: 2.5rem 2rem;
       position: relative; overflow: hidden;
     }
-    .hero-strip::before {
+    .page-hero::before {
       content: '';
       position: absolute; inset: 0;
-      background-image:
-        radial-gradient(ellipse at 80% 20%, rgba(0,180,216,0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at 5% 90%, rgba(245,166,35,0.08) 0%, transparent 40%),
-        repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(0,180,216,0.03) 30px, rgba(0,180,216,0.03) 31px);
-      pointer-events: none;
+      background: repeating-linear-gradient(-50deg, transparent, transparent 48px,
+        rgba(255,255,255,0.02) 48px, rgba(255,255,255,0.02) 49px);
     }
-    /* Ondas decorativas */
-    .hero-waves {
-      position: absolute; bottom: 0; left: 0; width: 100%; opacity: 0.15;
+    .page-hero-accent {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: linear-gradient(to bottom, var(--amarelo), transparent);
     }
-    .hero-strip-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
-    .hero-chip { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #90e0ef; background: rgba(0,180,216,0.12); border: 1px solid rgba(0,180,216,0.3); padding: 0.4em 1em; border-radius: 100px; margin-bottom: 1.2rem; }
-    .hero-chip-dot { width: 5px; height: 5px; border-radius: 50%; background: #90e0ef; animation: pulse 2s ease-in-out infinite; }
-    .hero-title { font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 900; color: var(--branco); letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 0.75rem; }
-    .hero-title em { font-style: normal; color: #90e0ef; }
-    .hero-sub { font-size: 0.95rem; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 480px; }
-    .hero-stats { display: flex; gap: 2.5rem; flex-wrap: wrap; }
-    .hero-stat-val { font-size: 2.5rem; font-weight: 900; color: var(--branco); letter-spacing: -0.03em; line-height: 1; }
-    .hero-stat-val .acc { color: var(--amarelo); }
-    .hero-stat-val .acc2 { color: #90e0ef; }
-    .hero-stat-lbl { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-top: 0.3rem; }
-    .hero-wave { position: absolute; bottom: -1px; left: 0; width: 100%; z-index: 2; }
+    .page-hero-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+    .page-hero-eyebrow {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--amarelo);
+      margin-bottom: 0.6rem;
+    }
+    .page-hero-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 900;
+      color: var(--branco); letter-spacing: -0.02em; line-height: 1.1;
+    }
+    .page-hero-sub {
+      font-size: 0.9rem; color: rgba(255,255,255,0.6);
+      margin-top: 0.5rem; font-weight: 400;
+    }
+
+    .hero-wave { overflow: hidden; line-height: 0; }
     .hero-wave svg { display: block; width: 100%; }
 
-    /* ══ LAYOUT ══ */
-    .main-wrap { max-width: 1200px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+    /* MAIN */
+    .main-wrap {
+      max-width: 1200px; margin: 0 auto;
+      padding: 2rem 2rem 4rem;
+    }
 
-    /* ══ MAPA ══ */
-    .map-section { background: var(--branco); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.75rem; }
-    .map-header { padding: 1.25rem 1.5rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-    .map-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-med); display: flex; align-items: center; gap: 0.5rem; }
-    #mapa { height: 480px; }
-
-    /* ══ BUSCA ══ */
-    .filters-bar { background: var(--branco); border-radius: 14px; box-shadow: var(--shadow); padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .filter-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-aux); white-space: nowrap; }
-    .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
-    .search-wrap input { font-family: var(--font); font-size: 0.82rem; width: 100%; padding: 0.5rem 0.85rem 0.5rem 2.1rem; border: 1.5px solid var(--borda); border-radius: 8px; outline: none; color: var(--cinza-txt); background: var(--cinza-bg); transition: all 0.2s; }
-    .search-wrap input:focus { border-color: var(--hidro); background: var(--branco); box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
-    .search-icon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--cinza-aux); pointer-events: none; }
-    .filter-count { margin-left: auto; font-size: 0.72rem; font-weight: 600; color: var(--cinza-aux); }
-    .filter-count span { color: var(--hidro); font-weight: 800; }
-
-    /* ══ LISTA TERMINAIS ══ */
-    .term-list { display: flex; flex-direction: column; gap: 0.85rem; }
-
-    .term-card {
+    /* CARDS */
+    .card {
       background: var(--branco);
-      border-radius: 14px;
+      border-radius: 12px;
       box-shadow: var(--shadow);
-      padding: 1.25rem 1.5rem;
-      display: flex; align-items: center; gap: 1.25rem;
-      transition: box-shadow 0.22s, transform 0.22s;
-      cursor: pointer;
-      position: relative; overflow: hidden;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
     }
-    .term-card::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-      background: linear-gradient(to bottom, var(--hidro), var(--hidro-dk));
-      border-radius: 4px 0 0 4px;
+    .card-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--borda);
+      background: var(--azul-claro);
+      display: flex; align-items: center; gap: 0.75rem;
     }
-    .term-card:hover { box-shadow: var(--shadow-h); transform: translateX(4px); }
-    .term-card.hidden { display: none; }
-
-    .term-num {
-      font-size: 1.1rem; font-weight: 900; color: var(--hidro);
-      font-variant-numeric: tabular-nums;
-      min-width: 2rem; text-align: center; opacity: 0.4;
-    }
-
-    .term-icon {
-      width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--hidro-cl), #caf0f8);
+    .card-header-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: var(--azul);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .card-header-title {
+      font-size: 0.95rem; font-weight: 700; color: var(--azul);
+    }
+    .card-body { padding: 1.75rem; }
+
+    /* FORMULÁRIO */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label {
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--cinza-med);
+    }
+    select {
+      font-family: var(--font);
+      font-size: 0.92rem; font-weight: 500;
+      color: var(--cinza-txt);
+      background: var(--branco);
+      border: 1.5px solid var(--borda);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238896A8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+    }
+    select:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(0,45,114,0.1); }
+    select:disabled { background-color: var(--cinza-bg); color: var(--cinza-aux); cursor: not-allowed; }
+
+    /* LOADING */
+    .loading-bar {
+      display: none;
+      align-items: center; gap: 0.75rem;
+      padding: 1rem 1.75rem;
+      background: var(--azul-claro);
+      border-top: 1px solid var(--azul-borda);
+      font-size: 0.85rem; color: var(--azul); font-weight: 600;
+    }
+    .loading-bar.show { display: flex; }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--azul-borda);
+      border-top-color: var(--azul);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
     }
 
-    .term-body { flex: 1; min-width: 0; }
-    .term-destino { font-size: 0.95rem; font-weight: 700; color: var(--azul); margin-bottom: 0.3rem; }
-    .term-mun { font-size: 0.78rem; color: var(--cinza-aux); font-weight: 500; display: flex; align-items: center; gap: 0.3rem; }
+    /* DETALHES */
+    .details-card { display: none; }
+    .details-card.show { display: block; }
 
-    .term-coords { font-size: 0.68rem; font-weight: 600; color: var(--cinza-aux); font-family: monospace; text-align: right; flex-shrink: 0; line-height: 1.6; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 640px) { .detail-grid { grid-template-columns: 1fr; } }
 
-    .term-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.2em 0.65em; border-radius: 100px; background: var(--hidro-cl); color: var(--hidro); border: 1px solid var(--hidro-brd); margin-top: 0.35rem; }
+    .detail-item {}
+    .detail-label {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--cinza-aux); margin-bottom: 0.2rem;
+    }
+    .detail-value {
+      font-size: 0.95rem; font-weight: 600; color: var(--cinza-txt);
+    }
+    .detail-value.highlight { color: var(--azul); font-weight: 700; }
 
-    /* ══ SEM RESULTADOS ══ */
-    .no-results { display: none; text-align: center; padding: 4rem 2rem; color: var(--cinza-aux); }
-    .no-results.show { display: block; }
+    .status-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.3em 0.8em; border-radius: 100px;
+    }
+    .status-chip.obra {
+      color: var(--verde); background: #E6F4ED;
+      border: 1px solid rgba(0,123,62,0.2);
+    }
+    .status-chip.sem-obra {
+      color: var(--cinza-aux); background: var(--cinza-bg);
+      border: 1px solid var(--borda);
+    }
+    .chip-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-    /* ══ MODAL ══ */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal { background: var(--branco); border-radius: 20px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 80px rgba(0,45,114,0.22); transform: translateY(20px); transition: transform 0.25s; }
-    .modal-overlay.open .modal { transform: none; }
-    .modal-header { background: linear-gradient(135deg, #012a4a, #01497c); padding: 2rem; position: relative; }
-    .modal-close { position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.12); border: none; color: white; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .modal-close:hover { background: rgba(255,255,255,0.22); }
-    .modal-icon { font-size: 2.2rem; margin-bottom: 0.6rem; }
-    .modal-title { font-size: 1.35rem; font-weight: 900; color: var(--branco); letter-spacing: -0.02em; margin-bottom: 0.3rem; }
-    .modal-mun { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
-    .modal-body { padding: 1.75rem; }
-    .modal-section { margin-bottom: 1.25rem; }
-    .modal-section-title { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--cinza-aux); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--borda); }
-    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .modal-field-lbl { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza-aux); margin-bottom: 0.15rem; }
-    .modal-field-val { font-size: 0.88rem; font-weight: 600; color: var(--cinza-txt); }
+    /* LOCALIZAÇÃO / MAPA */
+    .map-section {
+      border-top: 1px solid var(--borda);
+      padding-top: 1.5rem;
+    }
+    .map-label {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--cinza-med);
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .map-label::before { content: '🗺️'; font-size: 0.9rem; }
 
-    /* Minimap no modal */
-    #modalMinimap { height: 200px; border-radius: 10px; overflow: hidden; margin-top: 1rem; border: 1px solid var(--borda); }
+    /* WRAPPER DO MAPA */
+    .map-wrapper {
+      border-radius: 12px; overflow: hidden;
+      border: 1.5px solid var(--borda);
+      box-shadow: 0 4px 20px rgba(0,45,114,0.08);
+      position: relative;
+    }
+    .map-toolbar {
+      background: var(--branco);
+      border-bottom: 1px solid var(--borda);
+      padding: 0.65rem 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.75rem; flex-wrap: wrap;
+    }
+    .map-toolbar-info { display: flex; align-items: center; gap: 0.6rem; }
+    .map-ramal-badge {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase;
+      background: var(--azul); color: #fff;
+      padding: 0.25em 0.8em; border-radius: 100px;
+    }
+    .map-coords-text {
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem; color: var(--cinza-aux);
+    }
+    .map-toolbar-actions { display: flex; gap: 0.45rem; }
+    .map-action-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-family: var(--font); font-size: 0.72rem; font-weight: 700;
+      color: var(--azul); text-decoration: none;
+      background: var(--azul-claro); border: 1.5px solid var(--azul-borda);
+      padding: 0.38em 0.85em; border-radius: 100px;
+      cursor: pointer; transition: background 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .map-action-btn:hover { background: var(--azul-borda); transform: translateY(-1px); }
+    #leaflet-map {
+      width: 100%; height: 360px; background: #e8eef5;
+    }
+    .map-legend {
+      background: var(--branco); border-top: 1px solid var(--borda);
+      padding: 0.55rem 1rem;
+      display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+    }
+    .map-legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.68rem; color: var(--cinza-med); font-weight: 600;
+    }
+    .legend-line { width: 22px; height: 3px; border-radius: 2px; }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid;
+    }
+    .map-loading-overlay {
+      position: absolute; inset: 0;
+      background: rgba(245,247,251,0.9);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.75rem; z-index: 999;
+    }
+    .map-loading-overlay.hidden { display: none; }
+    .map-loading-text { font-size: 0.85rem; font-weight: 600; color: var(--azul); }
 
-    /* ══ FOOTER ══ */
-    .site-footer { background: var(--azul); padding: 2rem; }
-    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    /* FALLBACK: só ponto (sem traçado) */
+    .loc-card {
+      background: linear-gradient(135deg, var(--azul) 0%, #00408F 100%);
+      border-radius: 12px; padding: 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1.25rem; flex-wrap: wrap;
+    }
+    .loc-card-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+    .loc-icon-wrap {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+    .loc-info { min-width: 0; }
+    .loc-info-title {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 0.3rem;
+    }
+    .loc-coords { font-family: 'Courier New', monospace; font-size: 1rem; font-weight: 700; color: #fff; }
+    .loc-coords span { color: var(--amarelo); font-size: 0.82rem; font-weight: 500; margin-left: 0.5rem; font-family: var(--font); }
+    .loc-btn {
+      display: inline-flex; align-items: center; gap: 0.55rem;
+      font-family: var(--font); font-size: 0.82rem; font-weight: 700;
+      color: var(--azul); background: #fff; border: none;
+      padding: 0.75em 1.4em; border-radius: 100px; cursor: pointer;
+      text-decoration: none; white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s; flex-shrink: 0;
+    }
+    .loc-btn:hover { background: var(--amarelo-cl); transform: translateY(-2px); }
+    .loc-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .loc-no-coords {
+      background: var(--cinza-bg); border: 1.5px dashed var(--borda);
+      border-radius: 12px; padding: 1.5rem;
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.88rem; color: var(--cinza-aux); font-weight: 500;
+    }
+
+    /* FOOTER */
+    .site-footer {
+      background: var(--branco);
+      border-top: 2px solid var(--azul);
+      padding: 1.75rem 2rem;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
     .footer-brand { display: flex; align-items: center; gap: 0.75rem; }
-    .footer-icon { width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-    .footer-name { font-size: 0.9rem; font-weight: 800; color: var(--branco); }
-    .footer-name span { color: var(--amarelo); }
-    .footer-sub { font-size: 0.65rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
-    .footer-copy { font-size: 0.68rem; color: rgba(255,255,255,0.4); }
-
-    @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
-    @keyframes up { from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
-    .fade-in { animation: up 0.35s ease forwards; }
-
-    @media (max-width: 680px) {
-      .term-coords { display: none; }
-      .modal-grid { grid-template-columns: 1fr; }
-      .main-wrap { padding: 1.5rem 1rem 3rem; }
+    .footer-icon {
+      width: 34px; height: 34px; border-radius: 6px;
+      background: var(--azul);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
     }
+    .footer-name { font-size: 0.9rem; font-weight: 800; color: var(--azul); }
+    .footer-name span { color: var(--amarelo); }
+    .footer-sub { font-size: 0.65rem; color: var(--cinza-aux); }
+    .footer-copy { font-size: 0.68rem; color: var(--cinza-aux); }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  
+    /* ══ IDENTIDADE VISUAL — GOVERNO DO AMAZONAS ══ */
+    :root {
+      --gov-azul:    #293258;
+      --gov-verde:   #33A23D;
+      --gov-amarelo: #FFED00;
+      --gov-cinza:   #ABABAB;
+    }
+    .gov-bar {
+      background: var(--gov-azul);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .gov-bar::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0; width: 220px;
+      background: linear-gradient(135deg, transparent 38%, rgba(51,162,61,0.10) 38%),
+                  linear-gradient(225deg, transparent 42%, rgba(255,237,0,0.06) 42%);
+      pointer-events: none;
+    }
+    .gov-logo { display:flex; align-items:center; height:100%; position:relative; z-index:1; }
+    .gov-logo img { height:44px; width:auto; object-fit:contain; }
+    .gov-status {
+      display:flex; align-items:center; gap:.4rem;
+      font-size:.62rem; font-weight:600; color:var(--gov-amarelo);
+      letter-spacing:.08em; text-transform:uppercase;
+      position:relative; z-index:1;
+    }
+    .gov-status-dot {
+      width:5px; height:5px; border-radius:50%;
+      background:var(--gov-amarelo); box-shadow:0 0 6px var(--gov-amarelo);
+      animation:pulse 2s ease-in-out infinite;
+    }
+    .gov-colorbar {
+      height:4px;
+      background:linear-gradient(90deg,
+        var(--gov-azul) 0% 33%, var(--gov-verde) 33% 66%, var(--gov-amarelo) 66% 100%);
+    }
+    .seinfra-header {
+      background: var(--gov-azul);
+      padding: .75rem 2rem;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom: 3px solid var(--gov-verde);
+      position:sticky; top:0; z-index:200;
+      box-shadow: 0 3px 20px rgba(41,50,88,.3);
+    }
+    .seinfra-logo img { height:34px; width:auto; object-fit:contain; }
+    .seinfra-right { display:flex; align-items:center; gap:.75rem; }
+    .seinfra-badge {
+      font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--gov-azul); background:var(--gov-amarelo);
+      padding:.32em 1em; border-radius:100px; white-space:nowrap;
+    }
+    .seinfra-back {
+      font-size:.7rem; font-weight:600; color:rgba(255,255,255,.65);
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+      padding:.32em .85em; border-radius:7px; text-decoration:none;
+      transition:all .15s; white-space:nowrap;
+    }
+    .seinfra-back:hover { background:rgba(255,255,255,.15); color:#fff; }
+    @media(max-width:640px){
+      .gov-bar{ padding:0 1rem; height:46px; }
+      .gov-logo img{ height:34px; }
+      .seinfra-header{ padding:.6rem 1rem; }
+      .seinfra-logo img{ height:26px; }
+      .seinfra-badge{ font-size:.58rem; padding:.25em .7em; }
+    }
+
   </style>
 </head>
 <body>
+<!-- GOV BAR -->
+<div class="gov-bar">
+  <div class="gov-logo">
+    <img src="data:image/png;base64,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" alt="Governo do Estado do Amazonas"/>
+  </div>
+  <div class="gov-status"><div class="gov-status-dot"></div>Ramais · SEINFRA</div>
+</div>
+<div class="gov-colorbar"></div>
+<!-- SEINFRA HEADER -->
+<header class="seinfra-header">
+  <div class="seinfra-logo">
+    <img src="data:image/png;base64,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" alt="Secretaria de Infraestrutura"/>
+  </div>
+  <div class="seinfra-right">
+    <div class="seinfra-badge">Consulta de Ramais</div>
+    <a class="seinfra-back" href="https://leonzordhue.github.io/painel-dmob/" target="_blank">← Painel</a>
+  </div>
+</header>
 
-  <div class="topbar">
-    <div class="topbar-left">Governo do Estado do Amazonas</div>
-    <div class="topbar-right"><div class="topbar-dot"></div>SEINFRA · Hidroviário</div>
+
+    
+
+  <!-- MINI HERO -->
+  <div class="page-hero">
+    <div class="page-hero-accent"></div>
+    <div class="page-hero-inner">
+      <div class="page-hero-eyebrow">🚧 Base de Dados</div>
+      <div class="page-hero-title">Ramais Vicinais</div>
+      <div class="page-hero-sub">Consulta de ramais por município — SEINFRA/AM · 2026</div>
+    </div>
+  </div>
+  <div class="hero-wave">
+    <svg viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,28 C360,46 720,8 1080,28 C1260,38 1380,20 1440,28 L1440,40 L0,40 Z" fill="#F5F7FB"/>
+    </svg>
   </div>
 
-  <header class="site-header">
-    <div class="header-brand">
-      <div class="brand-icon">⚓</div>
-      <div>
-        <div class="brand-sup">Secretaria de Estado de Infraestrutura</div>
-        <div class="brand-name">Terminais<span>/AM</span></div>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="header-badge">Hidroviário</div>
-      <a class="header-back" href="https://leonzordhue.github.io/painel-dmob/" target="_blank">← Painel</a>
-    </div>
-  </header>
-
-  <!-- HERO -->
-  <section class="hero-strip">
-    <div class="hero-strip-inner">
-      <div>
-        <div class="hero-chip"><span class="hero-chip-dot"></span>Sistema Hidroviário — AM</div>
-        <h1 class="hero-title">Terminais<br><em>Flutuantes</em></h1>
-        <p class="hero-sub">Mapeamento e gestão dos terminais hidroviários flutuantes do Amazonas. Localização georreferenciada dos pontos de embarque e desembarque nas comunidades e distritos do interior do Estado.</p>
-      </div>
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="hero-stat-val"><span class="acc">31</span></div>
-          <div class="hero-stat-lbl">Terminais</div>
-        </div>
-        <div class="hero-stat">
-          <div class="hero-stat-val"><span class="acc2">27</span></div>
-          <div class="hero-stat-lbl">Municípios</div>
-        </div>
-        <div class="hero-stat">
-          <div class="hero-stat-val"><span class="acc">AM</span></div>
-          <div class="hero-stat-lbl">Estado</div>
-        </div>
-      </div>
-    </div>
-    <div class="hero-wave">
-      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,20 C240,55 480,5 720,30 C960,55 1200,10 1440,35 L1440,60 L0,60 Z" fill="#F5F7FB" opacity="0.5"/>
-        <path d="M0,35 C240,10 480,50 720,20 C960,0 1200,45 1440,20 L1440,60 L0,60 Z" fill="#F5F7FB"/>
-      </svg>
-    </div>
-  </section>
-
+  <!-- MAIN -->
   <div class="main-wrap">
 
-    <!-- MAPA -->
-    <div class="map-section">
-      <div class="map-header">
-        <div class="map-title">⚓ Localização dos Terminais Flutuantes — Estado do Amazonas</div>
+    <!-- Seletores -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">🔍</div>
+        <div class="card-header-title">Selecionar Ramal</div>
       </div>
-      <div id="mapa"></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="municipioSelect">Município</label>
+            <select id="municipioSelect" onchange="onMunicipioChange()">
+              <option value="">Carregando municípios...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ramalSelect">Ramal</label>
+            <select id="ramalSelect" onchange="onRamalChange()" disabled>
+              <option value="">Selecione um município primeiro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="loading-bar" id="loading">
+        <div class="spinner"></div>
+        Carregando dados da base SEINFRA...
+      </div>
     </div>
 
-    <!-- BUSCA -->
-    <div class="filters-bar">
-      <span class="filter-label">Terminais:</span>
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Buscar município ou destino..."/>
+    <!-- Detalhes do Ramal -->
+    <div class="card details-card" id="detalhesCard">
+      <div class="card-header">
+        <div class="card-header-icon">📋</div>
+        <div class="card-header-title" id="detalhesTitle">Informações do Ramal</div>
       </div>
-      <div class="filter-count"><span id="countNum">31</span> terminais encontrados</div>
-    </div>
-
-    <!-- LISTA -->
-    <div class="term-list" id="termList"></div>
-    <div class="no-results" id="noResults">Nenhum terminal encontrado.</div>
-
-  </div>
-
-  <!-- MODAL -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <button class="modal-close" id="modalClose">✕</button>
-        <div class="modal-icon">⚓</div>
-        <div class="modal-title" id="mTitle"></div>
-        <div class="modal-mun" id="mMun"></div>
-      </div>
-      <div class="modal-body">
-        <div class="modal-section">
-          <div class="modal-section-title">Informações do Terminal</div>
-          <div class="modal-grid" id="mGrid"></div>
-        </div>
-        <div class="modal-section">
-          <div class="modal-section-title">Localização no Mapa</div>
-          <div id="modalMinimap"></div>
-        </div>
-        <div style="margin-top:1rem;padding:1rem;background:var(--hidro-cl);border-radius:10px;font-size:0.78rem;color:#01497c;line-height:1.6;border:1px solid var(--hidro-brd);">
-          <strong>ℹ️ Sobre os Terminais Flutuantes:</strong> Os terminais hidroviários flutuantes da SEINFRA/AM são estruturas de embarque e desembarque instaladas às margens dos rios do Amazonas, garantindo conectividade entre municípios-sede e suas comunidades e distritos no interior do Estado.
+      <div class="card-body">
+        <div class="detail-grid" id="detalhesGrid"></div>
+        <div class="map-section">
+          <div class="map-label">Traçado e Localização do Ramal</div>
+          <div id="mapContainer"></div>
         </div>
       </div>
     </div>
-  </div>
 
+  </div><!-- /main-wrap -->
+
+  <!-- FOOTER -->
   <footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <div class="footer-icon">⚓</div>
+        <div class="footer-icon">🚧</div>
         <div>
           <div class="footer-name">SEINFRA<span>/AM</span></div>
           <div class="footer-sub">Secretaria de Estado de Infraestrutura — Amazonas</div>
         </div>
       </div>
-      <div class="footer-copy">Hidroviário · Manaus, AM · 2026</div>
+      <div class="footer-copy">
+        Dados extraídos da base oficial da SEINFRA-AM · Atualizado em 2026
+      </div>
     </div>
   </footer>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-  const TERMINAIS = [
-    {"localidade":"JAPURÁ","destino":"Comunidade Acanauí","lat":-1.8214,"lon":-66.60935},
-    {"localidade":"ALVARÃES","destino":"Distrito de Nogueira","lat":-3.30389,"lon":-64.77853},
-    {"localidade":"AMATURÁ","destino":"Comunidade Nova Italia","lat":-3.40794,"lon":-68.22404},
-    {"localidade":"ANAMÃ","destino":"Distrito do Arixi","lat":-3.47613,"lon":-61.50977},
-    {"localidade":"ANORI","destino":"Comunidade Vila do Cuianã","lat":-3.77333,"lon":-61.64444},
-    {"localidade":"ATALAIA DO NORTE","destino":"Porto de Atalaia do Norte","lat":-4.36293,"lon":-70.1924},
-    {"localidade":"AUTAZES","destino":"Comunidade Vila do Novo Céu","lat":-3.38436,"lon":-59.27321},
-    {"localidade":"BARCELOS","destino":"Distrito de Moura","lat":-1.45722,"lon":-61.62972},
-    {"localidade":"BARREIRINHA","destino":"Distrito Cametá de Ramos","lat":-2.83611,"lon":-57.41722},
-    {"localidade":"BENJAMIN CONSTANT","destino":"Comunidade Feijoal","lat":-4.29514,"lon":-69.53769},
-    {"localidade":"BENJAMIN CONSTANT","destino":"Comunidade Filadélfia","lat":-4.37867,"lon":-59.63389},
-    {"localidade":"BERURI","destino":"Comunidade Santa Maria do Pupunhal","lat":-3.726,"lon":-61.24186},
-    {"localidade":"BOA VISTA DO RAMOS","destino":"Comunidade Menino de Deus","lat":-3.15968,"lon":-57.54784},
-    {"localidade":"BOA VISTA DO RAMOS","destino":"Comunidade de Jesus do Lago Preto do Ramos","lat":-3.26628,"lon":-57.99386},
-    {"localidade":"BORBA","destino":"Distrito do Axinim","lat":-4.05022,"lon":-59.37214},
-    {"localidade":"CAREIRO","destino":"Comunidade Purupuru","lat":-3.38278,"lon":-59.72278},
-    {"localidade":"HUMAITÁ","destino":"Comunidade de Auxiliadora","lat":-6.24962,"lon":-61.83792},
-    {"localidade":"JURUÁ","destino":"Porto de Juruá","lat":-3.47058,"lon":-66.06476},
-    {"localidade":"JUTAÍ","destino":"Vila Copatana","lat":-2.85194,"lon":-66.93},
-    {"localidade":"MANICORÉ","destino":"Comunidade Cachoeirinha","lat":-5.49083,"lon":-60.825},
-    {"localidade":"MANICORÉ","destino":"Comunidade Democracia","lat":-6.48333,"lon":-61.4},
-    {"localidade":"MAUÉS","destino":"Comunidade Bom Jesus do Canela","lat":-3.60494,"lon":-57.98478},
-    {"localidade":"NHAMUNDÁ","destino":"Rua Tiradentes","lat":-2.19238,"lon":-56.70922},
-    {"localidade":"PARINTINS","destino":"Comunidade do Bom Socorro do Zé Açú","lat":-2.67402,"lon":-56.62769},
-    {"localidade":"PARINTINS","destino":"Distrito do Mocambo","lat":-2.45918,"lon":-57.28159},
-    {"localidade":"SANTO ANTÔNIO DO IÇÁ","destino":"Vila da Betânia","lat":-3.07245,"lon":-68.07091},
-    {"localidade":"SÃO PAULO DE OLIVENÇA","destino":"Comunidade Campo Alegre","lat":-3.58621,"lon":-69.38079},
-    {"localidade":"SÃO SEBASTIÃO DO UATUMÃ","destino":"Distrito de Santana","lat":-2.57758,"lon":-57.98683},
-    {"localidade":"TAPAUÁ","destino":"Comunidade Foz do Tapauá","lat":-5.76247,"lon":-64.39258},
-    {"localidade":"TEFÉ","destino":"Comunidade Caimbé","lat":-3.52972,"lon":-64.40981},
-    {"localidade":"URUCURITUBA","destino":"Comunidade do Tabocal","lat":-3.122,"lon":-58.15847}
-  ];
+    // ========== CONFIGURAÇÕES ==========
+    const SPREADSHEET_ID = '1Cr5Qbj_My7oOcIYiIjZ6NgJiCsij4ZAQCSxdP49cffc';
+    const API_KEY        = 'AIzaSyBrK45p0mev1t5NyDJomdDIvJTe2DWaojA';
+    const SHEET_NAME     = 'Ramais';
+    const RANGE          = `${SHEET_NAME}!A:BK`;
 
-  // ══ MAPA PRINCIPAL ══
-  const mapa = L.map('mapa', { center: [-4.0, -63.0], zoom: 5 });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19
-  }).addTo(mapa);
+    // ⚠️ SUBSTITUA pela URL raw do seu GitHub após subir o arquivo
+    const GEOJSON_URL = 'https://raw.githubusercontent.com/leonzordhue/seinfra-ramais/main/RAMAIS_SEINFRA.geojson';
 
-  const makeIcon = () => L.divIcon({
-    className: '',
-    html: `<div style="
-      width:30px;height:30px;border-radius:50%;
-      background:linear-gradient(135deg,#0077b6,#023e8a);
-      border:3px solid white;
-      box-shadow:0 3px 10px rgba(0,119,182,0.5);
-      display:flex;align-items:center;justify-content:center;
-      font-size:13px;color:white;
-    ">⚓</div>`,
-    iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -17]
-  });
+    let sheetData          = [];
+    let ramaisPorMunicipio = {};
+    let geoJsonData        = null;   // cache do GeoJSON completo
+    let leafletMap         = null;   // instância do mapa Leaflet
+    let tracadoLayer       = null;   // layer do traçado atual
+    let marcadorInicio     = null;   // marcador ponto inicial
 
-  TERMINAIS.forEach((t, i) => {
-    const m = L.marker([t.lat, t.lon], { icon: makeIcon() }).addTo(mapa);
-    m.bindPopup(`
-      <div style="font-family:'Outfit',sans-serif;min-width:190px;">
-        <div style="font-weight:800;font-size:0.88rem;color:#002D72;margin-bottom:0.25rem;">${t.destino}</div>
-        <div style="font-size:0.73rem;color:#666;margin-bottom:0.5rem;">📍 ${capitalize(t.localidade)}</div>
-        <div style="font-size:0.7rem;font-family:monospace;color:#8896A8;">${t.lat.toFixed(4)}°S · ${Math.abs(t.lon).toFixed(4)}°W</div>
-      </div>
-    `);
-    m.on('click', () => abrirModal(i));
-  });
+    const COL = {
+      CODIGO: 0, NUMERO: 1, NOME: 2, MUNICIPIO: 9, EXTENSAO: 11,
+      INICIO: 7, FIM: 8, LATITUDE: 14, LONGITUDE: 15,
+      REVESTIMENTO: 51, FONTE: 53, SITUACAO: 54, PONTO_REF: 6
+    };
 
-  function capitalize(s) {
-    return s.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
-  }
+    // ========== INICIALIZAÇÃO ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarDados();
+      carregarGeoJson(); // carrega em paralelo já na abertura
+    });
 
-  // ══ RENDER LISTA ══
-  function renderLista(lista) {
-    const el = document.getElementById('termList');
-    const noRes = document.getElementById('noResults');
-    const count = document.getElementById('countNum');
+    // ========== CARREGAR PLANILHA ==========
+    async function carregarDados() {
+      const loading = document.getElementById('loading');
+      loading.classList.add('show');
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`Erro HTTP: ${resp.status}`);
+        const data = await resp.json();
+        const rows = data.values || [];
+        if (rows.length === 0) throw new Error('Nenhum dado encontrado');
 
-    if (!lista.length) {
-      el.innerHTML = '';
-      noRes.classList.add('show');
-      count.textContent = '0';
-      return;
+        sheetData = rows.slice(1).map((row, index) => {
+          const obj = {
+            rowIndex:       index + 2,
+            codigo:         row[COL.CODIGO]      || '',
+            numero:         row[COL.NUMERO]      || '',
+            nome:           row[COL.NOME]        || '',
+            municipio:      row[COL.MUNICIPIO]   || '',
+            extensao:       parseFloat((row[COL.EXTENSAO] || '0').replace(',', '.')) || 0,
+            inicio:         row[COL.INICIO]      || '',
+            fim:            row[COL.FIM]         || '',
+            latitude:       parseFloat((row[COL.LATITUDE]  || '').replace(',', '.')) || null,
+            longitude:      parseFloat((row[COL.LONGITUDE] || '').replace(',', '.')) || null,
+            situacao:       row[COL.SITUACAO]    || '',
+            revestimento:   row[COL.REVESTIMENTO]|| '',
+            fonte:          row[COL.FONTE]        || '',
+            pontoReferencia:row[COL.PONTO_REF]   || ''
+          };
+          // valida coordenadas
+          if (obj.latitude  && (obj.latitude  < -90  || obj.latitude  > 90))  obj.latitude  = null;
+          if (obj.longitude && (obj.longitude < -180 || obj.longitude > 180)) obj.longitude = null;
+
+          const sit = obj.situacao.toUpperCase();
+          obj.temObra = sit.includes('EM OBRA') && !sit.includes('EXTINTA');
+          const ident = [];
+          if (obj.codigo) ident.push(obj.codigo);
+          if (obj.numero) ident.push(obj.numero);
+          obj.nomeCompleto = ident.length ? ident.join(' - ') + ' - ' + obj.nome : obj.nome;
+          return obj;
+        }).filter(row => row.municipio);
+
+        ramaisPorMunicipio = {};
+        sheetData.forEach(ramal => {
+          const mun = ramal.municipio;
+          if (!ramaisPorMunicipio[mun]) ramaisPorMunicipio[mun] = [];
+          ramaisPorMunicipio[mun].push(ramal);
+        });
+
+        popularMunicipios();
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao carregar dados da planilha: ' + error.message);
+      } finally {
+        loading.classList.remove('show');
+      }
     }
 
-    noRes.classList.remove('show');
-    count.textContent = lista.length;
+    // ========== CARREGAR GEOJSON ==========
+    async function carregarGeoJson() {
+      try {
+        const resp = await fetch(GEOJSON_URL);
+        if (!resp.ok) throw new Error('GeoJSON não encontrado');
+        geoJsonData = await resp.json();
+        console.log(`✅ GeoJSON carregado: ${geoJsonData.features.length} features`);
 
-    el.innerHTML = lista.map((t, idx) => {
-      const i = TERMINAIS.indexOf(t);
-      return `
-        <div class="term-card fade-in" onclick="abrirModal(${i})" style="animation-delay:${idx*0.02}s">
-          <div class="term-num">${String(idx+1).padStart(2,'0')}</div>
-          <div class="term-icon">⚓</div>
-          <div class="term-body">
-            <div class="term-destino">${t.destino}</div>
-            <div class="term-mun">📍 ${capitalize(t.localidade)}</div>
-            <div><span class="term-badge">Terminal Flutuante</span></div>
-          </div>
-          <div class="term-coords">
-            ${t.lat.toFixed(4)}°S<br>
-            ${Math.abs(t.lon).toFixed(4)}°W
-          </div>
+        // Debug: mostra as chaves reais do primeiro feature
+        const primeiraChave = Object.keys(geoJsonData.features[0].properties);
+        console.log('🔑 Chaves do GeoJSON:', primeiraChave.filter(k => k.includes('D') || k.includes('m') || k.includes('N')));
+
+      } catch (e) {
+        console.warn('⚠️ GeoJSON não carregado:', e.message);
+        geoJsonData = null;
+      }
+    }
+
+    // Busca a feature do GeoJSON que corresponde ao ramal (por CÓDIGO + Número)
+    function buscarFeatureGeoJson(ramal) {
+      if (!geoJsonData) return null;
+
+      const codigoAlvo  = String(ramal.codigo).trim().toUpperCase();
+      const numeroAlvo  = String(ramal.numero).trim();
+
+      return geoJsonData.features.find(f => {
+        const p = f.properties;
+
+        // Pega o valor de CÓDIGO tolerando variações de encoding
+        const codigoFeature = String(
+          p['CÓDIGO'] || p['CODIGO'] || p['C\u00D3DIGO'] || ''
+        ).trim().toUpperCase();
+
+        // Pega o valor de Número tolerando variações
+        const numeroFeature = String(
+          p['Número'] || p['Numero'] || p['N\u00FAmero'] || p['N\u00FAmero_2'] || ''
+        ).trim();
+
+        return codigoFeature === codigoAlvo && numeroFeature === numeroAlvo;
+      }) || null;
+    }
+
+    // ========== SELECTS ==========
+    function popularMunicipios() {
+      const select = document.getElementById('municipioSelect');
+      const municipios = Object.keys(ramaisPorMunicipio).sort((a, b) => a.localeCompare(b));
+      select.innerHTML = '<option value="">Selecione um município</option>';
+      municipios.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value   = m;
+        opt.textContent = `${m} (${ramaisPorMunicipio[m].length})`;
+        select.appendChild(opt);
+      });
+      if (municipios.length === 0)
+        select.innerHTML = '<option value="">Nenhum município encontrado</option>';
+    }
+
+    function onMunicipioChange() {
+      const mun = document.getElementById('municipioSelect').value;
+      const ramalSelect = document.getElementById('ramalSelect');
+      document.getElementById('detalhesCard').classList.remove('show');
+      if (!mun) {
+        ramalSelect.innerHTML = '<option value="">Selecione um município primeiro</option>';
+        ramalSelect.disabled = true;
+        return;
+      }
+      const ramais = ramaisPorMunicipio[mun] || [];
+      ramalSelect.innerHTML = '<option value="">Selecione um ramal</option>';
+      ramais.sort((a, b) => a.nomeCompleto.localeCompare(b.nomeCompleto));
+      ramais.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.rowIndex;
+        opt.textContent = r.nomeCompleto;
+        ramalSelect.appendChild(opt);
+      });
+      ramalSelect.disabled = false;
+    }
+
+    function onRamalChange() {
+      const rowIndex = document.getElementById('ramalSelect').value;
+      if (!rowIndex) {
+        document.getElementById('detalhesCard').classList.remove('show');
+        return;
+      }
+      const ramal = sheetData.find(r => r.rowIndex == rowIndex);
+      if (!ramal) return;
+      exibirDetalhes(ramal);
+    }
+
+    // ========== EXIBIR DETALHES ==========
+    function exibirDetalhes(ramal) {
+      const card   = document.getElementById('detalhesCard');
+      const grid   = document.getElementById('detalhesGrid');
+      const title  = document.getElementById('detalhesTitle');
+      const mapDiv = document.getElementById('mapContainer');
+
+      title.textContent = ramal.nomeCompleto || 'Informações do Ramal';
+
+      const obraChip = ramal.temObra
+        ? `<span class="status-chip obra"><span class="chip-dot"></span>Em Obra</span>`
+        : `<span class="status-chip sem-obra"><span class="chip-dot"></span>Sem obra ativa</span>`;
+
+      const coordText = (ramal.latitude && ramal.longitude)
+        ? `${ramal.latitude.toFixed(6)}, ${ramal.longitude.toFixed(6)}`
+        : 'Não disponível';
+
+      grid.innerHTML = `
+        <div class="detail-item">
+          <div class="detail-label">Município</div>
+          <div class="detail-value highlight">${ramal.municipio}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Extensão</div>
+          <div class="detail-value highlight">${ramal.extensao.toFixed(2)} km</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Revestimento</div>
+          <div class="detail-value">${ramal.revestimento || 'Não informado'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Situação</div>
+          <div class="detail-value">${ramal.situacao || 'Não informado'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Fonte</div>
+          <div class="detail-value">${ramal.fonte || 'Não informado'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Obra</div>
+          <div class="detail-value">${obraChip}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Ponto de Referência</div>
+          <div class="detail-value">${ramal.pontoReferencia || 'Não informado'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Início</div>
+          <div class="detail-value">${ramal.inicio || 'N/I'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Fim</div>
+          <div class="detail-value">${ramal.fim || 'N/I'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Coordenadas (início)</div>
+          <div class="detail-value">${coordText}</div>
         </div>
       `;
-    }).join('');
-  }
 
-  renderLista(TERMINAIS);
+      // Renderizar mapa
+      renderizarMapa(ramal, mapDiv);
 
-  // ══ BUSCA ══
-  document.getElementById('searchInput').addEventListener('input', e => {
-    const t = e.target.value.toLowerCase().trim();
-    if (!t) { renderLista(TERMINAIS); return; }
-    renderLista(TERMINAIS.filter(x =>
-      x.localidade.toLowerCase().includes(t) ||
-      x.destino.toLowerCase().includes(t)
-    ));
-  });
+      card.classList.add('show');
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
-  // ══ MODAL ══
-  let minimapInstance = null;
+    // ========== MAPA LEAFLET ==========
+    function renderizarMapa(ramal, container) {
+      const feature = buscarFeatureGeoJson(ramal);
+      const temTracado = !!feature;
+      const temCoordenadas = !!(ramal.latitude && ramal.longitude);
 
-  function abrirModal(i) {
-    const t = TERMINAIS[i];
-    document.getElementById('mTitle').textContent = t.destino;
-    document.getElementById('mMun').textContent = '📍 ' + capitalize(t.localidade);
-    document.getElementById('mGrid').innerHTML = `
-      <div><div class="modal-field-lbl">Município</div><div class="modal-field-val">${capitalize(t.localidade)}</div></div>
-      <div><div class="modal-field-lbl">Destino</div><div class="modal-field-val">${t.destino}</div></div>
-      <div><div class="modal-field-lbl">Latitude</div><div class="modal-field-val" style="font-family:monospace">${t.lat.toFixed(5)}°</div></div>
-      <div><div class="modal-field-lbl">Longitude</div><div class="modal-field-val" style="font-family:monospace">${t.lon.toFixed(5)}°</div></div>
-    `;
+      if (!temTracado && !temCoordenadas) {
+        container.innerHTML = `
+          <div class="loc-no-coords">
+            <span>📍</span>
+            Coordenadas e traçado não disponíveis para este ramal
+          </div>`;
+        return;
+      }
 
-    document.getElementById('modalOverlay').classList.add('open');
+      const mapsUrl = temCoordenadas
+        ? `https://www.google.com/maps?q=${ramal.latitude},${ramal.longitude}&z=15`
+        : null;
 
-    // Minimap
-    setTimeout(() => {
-      if (minimapInstance) { minimapInstance.remove(); minimapInstance = null; }
-      const mm = document.getElementById('modalMinimap');
-      mm.innerHTML = '';
-      minimapInstance = L.map(mm, { center: [t.lat, t.lon], zoom: 12, zoomControl: false, attributionControl: false });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(minimapInstance);
-      L.marker([t.lat, t.lon], { icon: makeIcon() }).addTo(minimapInstance);
-    }, 100);
-  }
+      const coordLabel = temCoordenadas
+        ? `${ramal.latitude.toFixed(5)}, ${ramal.longitude.toFixed(5)}`
+        : 'Traçado disponível';
 
-  document.getElementById('modalClose').addEventListener('click', () => {
-    document.getElementById('modalOverlay').classList.remove('open');
-  });
-  document.getElementById('modalOverlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('modalOverlay'))
-      document.getElementById('modalOverlay').classList.remove('open');
-  });
+      const badgeTracado = temTracado
+        ? `<span class="map-ramal-badge">📐 Traçado disponível</span>`
+        : `<span class="map-ramal-badge" style="background:var(--cinza-aux)">📍 Ponto de início</span>`;
+
+      container.innerHTML = `
+        <div class="map-wrapper">
+          <div class="map-toolbar">
+            <div class="map-toolbar-info">
+              ${badgeTracado}
+              <span class="map-coords-text">${coordLabel}</span>
+            </div>
+            <div class="map-toolbar-actions">
+              <button class="map-action-btn" onclick="centralizarMapa()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                Centralizar
+              </button>
+              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="map-action-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Ver no Maps
+              </a>` : ''}
+            </div>
+          </div>
+
+          <div style="position:relative;">
+            <div id="leaflet-map"></div>
+            <div class="map-loading-overlay" id="mapLoadingOverlay">
+              <div class="spinner"></div>
+              <div class="map-loading-text">Carregando mapa...</div>
+            </div>
+          </div>
+
+          <div class="map-legend">
+            ${temTracado ? `
+            <div class="map-legend-item">
+              <div class="legend-line" style="background:#002D72;"></div>
+              Traçado do ramal
+            </div>` : ''}
+            ${temCoordenadas ? `
+            <div class="map-legend-item">
+              <div class="legend-dot" style="background:#F5A623;border-color:#002D72;"></div>
+              Ponto de início
+            </div>` : ''}
+            <div class="map-legend-item" style="margin-left:auto;color:var(--cinza-aux);font-weight:400;">
+              © OpenStreetMap contributors
+            </div>
+          </div>
+        </div>`;
+
+      // Destruir mapa anterior se existir
+      if (leafletMap) {
+        leafletMap.remove();
+        leafletMap = null;
+        tracadoLayer = null;
+        marcadorInicio = null;
+      }
+
+      // Inicializar Leaflet
+      setTimeout(() => {
+        const overlay = document.getElementById('mapLoadingOverlay');
+
+        // Centro inicial: coordenada do ramal ou primeiro ponto do traçado
+        let centroLat = ramal.latitude || -3.5;
+        let centroLon = ramal.longitude || -62.0;
+        let zoomInicial = 13;
+
+        if (!temCoordenadas && temTracado) {
+          const firstCoord = feature.geometry.coordinates[0][0];
+          centroLon = firstCoord[0];
+          centroLat = firstCoord[1];
+        }
+
+        leafletMap = L.map('leaflet-map', {
+          center: [centroLat, centroLon],
+          zoom: zoomInicial,
+          zoomControl: true,
+          attributionControl: false
+        });
+
+        // Tile layer — OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(leafletMap);
+
+        // Tile layer satelite (opcional, comentado)
+        // L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(leafletMap);
+
+        // Traçado GeoJSON
+        if (temTracado) {
+          tracadoLayer = L.geoJSON(feature, {
+            style: {
+              color: '#002D72',
+              weight: 4,
+              opacity: 0.92,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }
+          }).addTo(leafletMap);
+
+          // Ajusta zoom para cobrir todo o traçado
+          leafletMap.fitBounds(tracadoLayer.getBounds(), { padding: [30, 30] });
+        }
+
+        // Marcador ponto de início
+        if (temCoordenadas) {
+          const iconeInicio = L.divIcon({
+            html: `<div style="
+              width:16px;height:16px;border-radius:50%;
+              background:#F5A623;border:3px solid #002D72;
+              box-shadow:0 2px 8px rgba(0,0,0,0.35);
+            "></div>`,
+            className: '',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+
+          marcadorInicio = L.marker([ramal.latitude, ramal.longitude], { icon: iconeInicio })
+            .addTo(leafletMap)
+            .bindPopup(`
+              <div style="font-family:'Outfit',sans-serif;font-size:0.82rem;min-width:180px;">
+                <div style="font-weight:700;color:#002D72;margin-bottom:4px;">${ramal.nome}</div>
+                <div style="color:#4A5568;">${ramal.municipio}</div>
+                <div style="font-family:monospace;font-size:0.75rem;color:#8896A8;margin-top:4px;">
+                  ${ramal.latitude.toFixed(6)}, ${ramal.longitude.toFixed(6)}
+                </div>
+              </div>
+            `, { maxWidth: 240 });
+        }
+
+        overlay.classList.add('hidden');
+      }, 80);
+    }
+
+    function centralizarMapa() {
+      if (!leafletMap) return;
+      if (tracadoLayer) {
+        leafletMap.fitBounds(tracadoLayer.getBounds(), { padding: [30, 30] });
+      } else if (marcadorInicio) {
+        leafletMap.setView(marcadorInicio.getLatLng(), 14);
+      }
+    }
   </script>
+
 </body>
 </html>
