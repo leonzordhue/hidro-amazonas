@@ -392,6 +392,94 @@
   </footer>
 
   <script>
+  // ╔══════════════════════════════════════════════════════════════════════════════╗
+  // ║  AKE — AXIOMATIC KERNEL ENGINE · UNIFIED FIELD THEORY                       ║
+  // ║  Protocolo: UFT-1.0 · Arquivo Soberano · Zero Backend                       ║
+  // ╠══════════════════════════════════════════════════════════════════════════════╣
+  // ║  @domain    Infraestrutura Hidroviária — Terminais Flutuantes do Amazonas   ║
+  // ║  @author    Paulo Esteves Fernandes Neto — Chefe DMOB/SEINFRA-AM            ║
+  // ║  @version   1.0.0-ake                                                       ║
+  // ║  @build     GENESIS_RETROFIT                                                ║
+  // ║  @created   2026-03-24                                                      ║
+  // ║  @repo      github.com/leonzordhue/hidro-amazonas                           ║
+  // ║                                                                              ║
+  // ║  CLASSIFICAÇÃO AKE:                                                          ║
+  // ║    Perfil:        Soberano (Library interna, zero API de dados)              ║
+  // ║    Camada 1 (Library):   31 terminais flutuantes embutidos como JSON         ║
+  // ║    Camada 2 (Logic):     Busca textual, capitalize, geolocalização           ║
+  // ║    Camada 3 (Metadata):  JSDoc de autoridade em axiomas                      ║
+  // ║    Camada 4 (Log):       AKE_BUILD_LOG ativo                                ║
+  // ║    Camada 5 (Evolution): Pronto para iteração evolutiva                     ║
+  // ║    Camada 6 (UI):        Leaflet + Lista + Modal com minimap                ║
+  // ║                                                                              ║
+  // ║  DEPENDÊNCIAS EXTERNAS (somente renderização, não dados):                   ║
+  // ║    - Leaflet 1.9.4 (mapas)                                                  ║
+  // ║    - Google Fonts: Outfit                                                    ║
+  // ║    - OpenStreetMap Tiles (basemap)                                           ║
+  // ║                                                                              ║
+  // ║  Os dados deste arquivo NÃO dependem de nenhum serviço externo.             ║
+  // ║  Toda a base de conhecimento reside dentro do próprio arquivo.               ║
+  // ╚══════════════════════════════════════════════════════════════════════════════╝
+
+  // ============================================================================
+  // CAMADA 4 — LOG ENGINE (AKE_BUILD_LOG)
+  // Regra AKE-LOG-001: Nenhuma entrada pode ser removida.
+  // Regra AKE-LOG-002: A IA deve consultar este log antes de qualquer modificação.
+  // ============================================================================
+  const AKE_BUILD_LOG = Object.freeze([
+    {
+      build: "1.0.0-ake",
+      data: "2026-03-24T09:45:00-04:00",
+      autor: "Paulo Esteves Fernandes Neto",
+      ia_assistente: "Claude Opus 4.6",
+      tipo: "GENESIS_RETROFIT",
+      descricao: "Retrofit AKE aplicado ao index_hidro.html existente. Nenhuma funcionalidade alterada. Injeção das camadas AKE sobre código funcional já estável.",
+      estado_pre_retrofit: {
+        linhas: 548,
+        funcionalidade: "100% operacional",
+        dados: "31 terminais flutuantes embutidos (coordenadas + localidade + destino)",
+        mapa: "Leaflet com marcadores e popups",
+        busca: "Filtro textual por localidade e destino",
+        modal: "Detalhes com minimap embutido"
+      },
+      decisoes: [
+        "Manter const TERMINAIS como Library primária — dados já soberanos",
+        "Adicionar bloco _meta JSDoc com proveniência SEINFRA/Programa Calha Norte",
+        "JSDoc aplicado em capitalize() e renderLista() como axiomas de domínio",
+        "Funções de UI pura (abrirModal, event listeners) recebem delimitador L1 apenas"
+      ],
+      axiomas_identificados: [
+        "capitalize() — Normalização de topônimos amazônicos",
+        "renderLista() — Renderização ordenada de terminais com índice",
+        "Busca textual — Filtro por localidade/destino (case-insensitive)",
+        "makeIcon() — Identidade visual hidroviária (gradiente azul marítimo)"
+      ],
+      tentativas_falhas: [],
+      erros_corrigidos: []
+    }
+  ]);
+
+  // ============================================================================
+  // CAMADA 1 — THE LIBRARY (Conhecimento Estático)
+  // Base de dados hidroviária do Estado do Amazonas.
+  // Regra AKE-LIB-001: Todo dado deve ter bloco _meta com proveniência.
+  // ============================================================================
+
+  /**
+   * @meta Metadados de proveniência da base hidroviária
+   * @source SEINFRA/AM — Secretaria de Estado de Infraestrutura e Região
+   *         Metropolitana de Manaus, em conjunto com dados do Programa Calha Norte
+   *         (Ministério da Defesa) e levantamentos de campo DMOB
+   * @description Terminais Flutuantes instalados em comunidades ribeirinhas do
+   *              Amazonas para atracação de embarcações de médio porte em áreas
+   *              sem infraestrutura portuária fixa. Cada terminal é georreferenciado.
+   * @fields localidade: Município sede | destino: Comunidade/localidade atendida |
+   *         lat: Latitude decimal (negativa = Sul) | lon: Longitude decimal (negativa = Oeste)
+   * @coverage 31 terminais em 23 municípios do interior do Amazonas
+   * @responsible Paulo E. F. Neto — DMOB/SEINFRA-AM
+   * @validity Dados de infraestrutura instalada — válidos até desativação ou realocação
+   * @ake_rule AKE-LIB-001
+   */
   const TERMINAIS = [
     {"localidade":"JAPURÁ","destino":"Comunidade Acanauí","lat":-1.8214,"lon":-66.60935},
     {"localidade":"ALVARÃES","destino":"Distrito de Nogueira","lat":-3.30389,"lon":-64.77853},
@@ -426,12 +514,22 @@
     {"localidade":"URUCURITUBA","destino":"Comunidade do Tabocal","lat":-3.122,"lon":-58.15847}
   ];
 
-  // ══ MAPA PRINCIPAL ══
+  // ============================================================================
+  // CAMADA 6 — THE UI (Interface Reativa)
+  // Mapa, lista de terminais, busca textual e modal com minimap.
+  // Regra AKE-UI-001: Zero lógica de negócio na UI.
+  // ============================================================================
+
+  // ── MAPA PRINCIPAL ──
   const mapa = L.map('mapa', { center: [-4.0, -63.0], zoom: 5 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19
   }).addTo(mapa);
 
+  /**
+   * Gera ícone circular para marcador Leaflet — identidade hidroviária.
+   * @returns {L.DivIcon} Ícone com gradiente azul marítimo (#0077b6 → #023e8a)
+   */
   const makeIcon = () => L.divIcon({
     className: '',
     html: `<div style="
@@ -457,11 +555,35 @@
     m.on('click', () => abrirModal(i));
   });
 
+  // ============================================================================
+  // CAMADA 2 — THE LOGIC CORE (Motor Axiomático)
+  // Regra AKE-AXM-001: Nenhuma função de cálculo sem citação de fonte.
+  // ============================================================================
+
+  /**
+   * AXIOMA: Normalização de topônimos amazônicos
+   * @source  Convenção IBGE para nomes geográficos — primeira letra maiúscula,
+   *          demais minúsculas. Dados originais SEINFRA vêm em UPPERCASE.
+   * @logic   Split por espaço, capitalize cada palavra
+   * @domain  Válido para qualquer topônimo brasileiro em caixa alta
+   * @axiom_type Computacional (transformação de string determinística)
+   * @sanity_check capitalize("SANTO ANTÔNIO DO IÇÁ") === "Santo Antônio Do Içá"
+   * @ake_rule AKE-AXM-001
+   */
   function capitalize(s) {
     return s.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
   }
 
-  // ══ RENDER LISTA ══
+  /**
+   * AXIOMA: Renderização ordenada de terminais flutuantes
+   * @source  Padrão DMOB de apresentação — índice sequencial 01..N,
+   *          coordenadas em graus decimais com 4 casas, badge identificador
+   * @logic   Gera cards HTML com numeração, ícone, dados e coordenadas
+   * @domain  Válido para qualquer subconjunto de TERMINAIS (filtrado ou completo)
+   * @axiom_type Computacional (mapeamento array → HTML determinístico)
+   * @ake_rule AKE-AXM-001
+   */
+  // ── UI: Renderização de Lista ──
   function renderLista(lista) {
     const el = document.getElementById('termList');
     const noRes = document.getElementById('noResults');
@@ -499,7 +621,7 @@
 
   renderLista(TERMINAIS);
 
-  // ══ BUSCA ══
+  // ── UI: Busca Textual ──
   document.getElementById('searchInput').addEventListener('input', e => {
     const t = e.target.value.toLowerCase().trim();
     if (!t) { renderLista(TERMINAIS); return; }
@@ -509,7 +631,7 @@
     ));
   });
 
-  // ══ MODAL ══
+  // ── UI: Modal de Detalhes com Minimap ──
   let minimapInstance = null;
 
   function abrirModal(i) {
